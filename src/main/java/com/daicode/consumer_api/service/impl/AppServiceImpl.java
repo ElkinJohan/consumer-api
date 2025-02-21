@@ -23,54 +23,52 @@ public class AppServiceImpl implements IAppService {
     private final PublishLogger publishLogger;
 
     @Override
-    public String useSomeOperation(boolean flag) {
+    public String useSomeOperation() {
         RequestClientDTO requestClientDTO = RequestClientDTO.builder().number(100).someString("some").build();
         ResponseClientDTO responseClientDTO;
         double startTime = System.currentTimeMillis();
         double duration;
 
-        if (!flag) {
-            // EJEMPLO CUANDO EL CLIENTE RESPONDE CON ERROR
-            try {
-                // si se utiliza feign
-                this.iSomeClient.callMockFail(requestClientDTO);
-            } catch (FeignException e) {
-                // publicar al logger con status FALSE
-                // validar si requieren hacer otras acciones posteriores, ejm: por status, pueden reintentar nak o darle ack
-                log.error("Client error: {}", e.getMessage());
-            }
-            // NOTA: en el caso de usar otro cliente, ejem: validar el status y si es <> de 200 pueden enviar al logger con status FALSE
+        try {
+            // usando cliente con feign
+            responseClientDTO = this.iSomeClient.callMock(requestClientDTO);
+
+            // NOTA: si usan otro cliente, ejem: validar status y <> 200 pueden enviar al logger con status FALSE
+            // aquí se puede validar status y si es 200 escribir true si no ya uds validan
 
             duration = System.currentTimeMillis() - startTime;
-            // publicar en logger
-            // crear DTO subjectLogger
-            //this.publishLogger.publish(duration);
-            return "Finish process fail";
-        } else {
-            // EJEMPLO CUANDO EL CLIENTE RESPONDE CON EXITOSO
-            try {
-                // caso cliente feign, si es otro recordar apoyarse en status por ejemplo.
-                responseClientDTO = this.iSomeClient.callMockSuccess(requestClientDTO);
-                duration = System.currentTimeMillis() - startTime;
-                // usar el publicador logger
-                SubjectLoggerDTO subjectLoggerDTO = SubjectLoggerDTO.builder()
-                        .transactionId(UUID.fromString("b04fa4c4-c9dc-41b6-83a9-74a5a57354cf"))
-                        .originService("our-service")
-                        .duration(duration)
-                        .subscriberNumber("3158457850")
-                        .originUrl("client-url")
-                        .status(true)
-                        .date(OffsetDateTime.now())
-                        .build();
+            SubjectLoggerDTO subjectLoggerDTO = SubjectLoggerDTO.builder()
+                    .transactionId(UUID.fromString("b04fa4c4-c9dc-41b6-83a9-74a5a57354cf"))
+                    .originService("our-service")
+                    .duration(duration)
+                    .subscriberNumber("3158457850")
+                    .originUrl("client-url")
+                    .status(true)
+                    .date(OffsetDateTime.now())
+                    .build();
+            //String strRequest = "{\"dev\": \"Elkin\"}";
+            //String strRequest = "Response plain text";
 
-                this.publishLogger.publish(subjectLoggerDTO, requestClientDTO, responseClientDTO);
+            this.publishLogger.publish(subjectLoggerDTO, requestClientDTO /*strRequest*/, responseClientDTO);
 
-            } catch (FeignException e) {
-                log.error("Client error: {}", e.getMessage());
-            }
             return "Finish process success";
+        } catch (FeignException e) {
+            // publicar al logger con status FALSE
+            // validar si requieren hacer otras acciones posteriores, ejm: por status, pueden reintentar nak o darle ack
+            log.error("Client error: {}", e.getMessage());
+            duration = System.currentTimeMillis() - startTime;
+            SubjectLoggerDTO subjectLoggerDTO = SubjectLoggerDTO.builder()
+                    .transactionId(UUID.fromString("b04fa4c4-c9dc-41b6-83a9-74a5a57354cf"))
+                    .originService("our-service")
+                    .duration(duration)
+                    .subscriberNumber("3158457850")
+                    .originUrl("client-url")
+                    .status(false)
+                    .date(OffsetDateTime.now())
+                    .build();
 
+            this.publishLogger.publish(subjectLoggerDTO, requestClientDTO, e.getMessage());
         }
-
+        return "Finish program...";
     }
 }

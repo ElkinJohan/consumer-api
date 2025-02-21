@@ -14,8 +14,8 @@ public class AppController {
 
     private final IAppService iAppService;
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/{flag}")
-    public String publishLogger(@PathVariable boolean flag) {
-        return this.iAppService.useSomeOperation(flag);
+    @GetMapping()
+    public String useMethod(  ) {
+        return this.iAppService.useSomeOperation();
     }
 }
