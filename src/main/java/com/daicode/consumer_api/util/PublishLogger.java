@@ -22,14 +22,10 @@ public class PublishLogger {
     private final ObjectMapper objectMapper;
 
     public void publish(SubjectLoggerDTO subjectLoggerDTO, Object request, Object response) {
-
         UUID transactionId = subjectLoggerDTO.getTransactionId();
 
-        Map<String, Object> body = convertToMap(request, transactionId);
-        Map<String, Object> responseClient = Map.of("message", response);
-
-        subjectLoggerDTO.setRequest(body);
-        subjectLoggerDTO.setResponse(responseClient);
+        subjectLoggerDTO.setRequest(convertToMap(request, transactionId, "request"));
+        subjectLoggerDTO.setResponse(convertToMap(response, transactionId, "response"));
 
         try {
             subjectLoggerDTO.setHash(subjectLoggerDTO.generateHash());
@@ -39,22 +35,21 @@ public class PublishLogger {
         }
     }
 
-    private Map<String, Object> convertToMap(Object request, UUID transactionId) {
+    private Map<String, Object> convertToMap(Object data, UUID transactionId, String type) {
+        String rawTextKey = type.equals("request") ? "body" : "message";
+
         try {
-            if (request instanceof String jsonString) {
-                if (isValidJson(jsonString)) {
-                    return objectMapper.readValue(jsonString, new TypeReference<>() {
-                    });
-                } else {
-                    return Map.of("body", jsonString);
-                }
-            } else {
-                return objectMapper.convertValue(request, new TypeReference<>() {
-                });
+            if (data instanceof String jsonString) {
+                return isValidJson(jsonString)
+                        ? objectMapper.readValue(jsonString, new TypeReference<>() {
+                })
+                        : Map.of(rawTextKey, jsonString);
             }
+            return objectMapper.convertValue(data, new TypeReference<>() {
+            });
         } catch (JsonProcessingException e) {
-            log.error("Failed to convert loggerDTO request to Map with transactionId {}", transactionId);
-            throw new PublishLoggerException("Error converting logger request to Map", e);
+            log.error("Failed to convert {} to Map with transactionId {}", type, transactionId);
+            throw new PublishLoggerException("Error converting " + type + " to Map.", e);
         }
     }
 
