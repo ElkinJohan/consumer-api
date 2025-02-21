@@ -28,6 +28,7 @@ public class AppServiceImpl implements IAppService {
         ResponseClientDTO responseClientDTO;
         double startTime = System.currentTimeMillis();
         double duration;
+        UUID transactionIdTest = UUID.fromString("8ebfaf70-d298-4914-b617-f58268bd0b00");
 
         try {
             // usando cliente con feign
@@ -38,7 +39,7 @@ public class AppServiceImpl implements IAppService {
 
             duration = System.currentTimeMillis() - startTime;
             SubjectLoggerDTO subjectLoggerDTO = SubjectLoggerDTO.builder()
-                    .transactionId(UUID.fromString("b04fa4c4-c9dc-41b6-83a9-74a5a57354cf"))
+                    .transactionId(transactionIdTest)
                     .originService("our-service")
                     .duration(duration)
                     .subscriberNumber("3158457850")
@@ -58,7 +59,7 @@ public class AppServiceImpl implements IAppService {
             log.error("Client error: {}", e.getMessage());
             duration = System.currentTimeMillis() - startTime;
             SubjectLoggerDTO subjectLoggerDTO = SubjectLoggerDTO.builder()
-                    .transactionId(UUID.fromString("b04fa4c4-c9dc-41b6-83a9-74a5a57354cf"))
+                    .transactionId(transactionIdTest)
                     .originService("our-service")
                     .duration(duration)
                     .subscriberNumber("3158457850")
