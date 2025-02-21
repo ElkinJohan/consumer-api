@@ -1,1 +1,10 @@
 spring.application.name: consumer-api
+
+# --------------------------
+# --- NATS Configuration ---
+# --------------------------
+nats:
+  url: nats://localhost:4222
+  maxReconnects: -1         # -1 means infinite
+  secondsReconnectWait: 10  # 10 seconds
+  pub-logger: nebula.loggerV1_1_0

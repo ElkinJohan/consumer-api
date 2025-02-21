@@ -5,8 +5,12 @@ import com.daicode.consumer_api.exception.PublishLoggerException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.nats.client.Connection;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,7 +23,13 @@ import java.util.UUID;
 @Component
 public class PublishLogger {
 
+    @Setter
+    @Getter
+    @Value("${nats.pub-logger}")
+    private String subjectLogger;
+
     private final ObjectMapper objectMapper;
+    private final Connection natsConnection;
 
     public void publish(SubjectLoggerDTO subjectLoggerDTO, Object request, Object response) {
         UUID transactionId = subjectLoggerDTO.getTransactionId();
@@ -29,6 +39,8 @@ public class PublishLogger {
 
         try {
             subjectLoggerDTO.setHash(subjectLoggerDTO.generateHash());
+            String valueAsString = objectMapper.writeValueAsString(subjectLoggerDTO);
+            natsConnection.publish(getSubjectLogger(), valueAsString.getBytes());
         } catch (NoSuchAlgorithmException | IOException e) {
             log.error("Failed to generate Hash for subjectLoggerDTO with transactionId {}", transactionId);
             throw new PublishLoggerException("Error generating Hash for logger", e);
