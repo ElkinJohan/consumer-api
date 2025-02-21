@@ -21,3 +21,6 @@ Example status 500 in logger:
 ```
 
 Example uncontrolled status: view in debug mode or logger.
+
+# Diagram
+![Diagrama](diagrams\logger-signature.png)
